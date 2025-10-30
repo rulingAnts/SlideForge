@@ -1,0 +1,12 @@
+# GRN Video Generator Requirements
+# 
+# Note: This application uses tkinter which comes with Python by default.
+# The main external dependency is ffmpeg, which must be installed on your system.
+# 
+# For ffmpeg installation:
+# - Ubuntu/Debian: sudo apt-get install ffmpeg
+# - macOS: brew install ffmpeg
+# - Windows: Download from https://ffmpeg.org/download.html
+
+# No Python package dependencies are required for the basic functionality.
+# All required modules (tkinter, subprocess, threading, os, pathlib) are part of Python's standard library.
