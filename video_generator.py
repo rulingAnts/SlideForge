@@ -309,7 +309,10 @@ class VideoGeneratorApp:
 
 def check_ffmpeg():
     """Check if ffmpeg is available in the system."""
-    return shutil.which('ffmpeg') is not None
+    try:
+        return shutil.which('ffmpeg') is not None
+    except Exception:
+        return False
 
 
 def main():
