@@ -9,6 +9,7 @@ import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
 from pathlib import Path
 import threading
+import shutil
 
 
 class AudioImagePair:
@@ -306,8 +307,29 @@ class VideoGeneratorApp:
             raise Exception(f"ffmpeg error: {result.stderr}")
 
 
+def check_ffmpeg():
+    """Check if ffmpeg is available in the system."""
+    return shutil.which('ffmpeg') is not None
+
+
 def main():
     """Main entry point."""
+    # Check if ffmpeg is available
+    if not check_ffmpeg():
+        root = tk.Tk()
+        root.withdraw()  # Hide the main window
+        messagebox.showerror(
+            "ffmpeg Not Found",
+            "ffmpeg is not installed or not found in your system PATH.\n\n"
+            "Please install ffmpeg:\n"
+            "- Ubuntu/Debian: sudo apt-get install ffmpeg\n"
+            "- macOS: brew install ffmpeg\n"
+            "- Windows: Download from https://ffmpeg.org/download.html\n\n"
+            "After installation, restart the application."
+        )
+        root.destroy()
+        return
+    
     root = tk.Tk()
     app = VideoGeneratorApp(root)
     root.mainloop()
