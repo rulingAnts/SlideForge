@@ -1,0 +1,176 @@
+name: Build and Release
+
+# Trigger on version tags (e.g. v1.0.0) or manually via Actions tab
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write   # needed to create GitHub Releases
+
+jobs:
+  # ──────────────────────────────────────────────────────────────────────────
+  # Build job – runs once per platform in the matrix
+  # ──────────────────────────────────────────────────────────────────────────
+  build:
+    name: Build (${{ matrix.label }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # macOS Apple Silicon → onedir .app bundle
+          - os: macos-14
+            label: macos-arm64
+            artifact: GRN_VideoGenerator-macos-arm64.dmg
+
+          # macOS Intel → onedir .app bundle
+          - os: macos-13
+            label: macos-x64
+            artifact: GRN_VideoGenerator-macos-x64.dmg
+
+          # Windows x64 → single .exe
+          - os: windows-latest
+            label: windows-x64
+            artifact: GRN_VideoGenerator-windows-x64.exe
+
+          # Linux x86-64 → AppImage
+          - os: ubuntu-latest
+            label: linux-x86_64
+            artifact: GRN_VideoGenerator-linux-x86_64.AppImage
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Install tcl/tk runtime + libfuse2 before Python setup so the
+      # precompiled _tkinter module can find its shared libraries at runtime.
+      - name: Install system dependencies (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3-tk tk-dev libfuse2
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install PyInstaller
+        run: pip install pyinstaller
+
+      # ── macOS ─────────────────────────────────────────────────────────────
+      # --windowed produces a proper .app bundle.
+      # hdiutil creates a read/write staging DMG, adds the app + an
+      # /Applications symlink for the familiar drag-install experience,
+      # then converts it to a compressed read-only DMG for distribution.
+      - name: Build (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          pyinstaller --onedir --windowed --name GRN_VideoGenerator video_generator.py
+
+          # Stage folder for DMG contents
+          mkdir -p dmg_stage
+          cp -r dist/GRN_VideoGenerator.app dmg_stage/
+          ln -s /Applications dmg_stage/Applications
+
+          # Create compressed, read-only DMG
+          hdiutil create \
+            -volname "GRN VideoGenerator" \
+            -srcfolder dmg_stage \
+            -ov -format UDZO \
+            "${{ matrix.artifact }}"
+
+      # ── Windows ───────────────────────────────────────────────────────────
+      - name: Build (Windows)
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          pyinstaller --onefile --windowed --name GRN_VideoGenerator video_generator.py
+          cp dist/GRN_VideoGenerator.exe "${{ matrix.artifact }}"
+
+      # ── Linux → AppImage ──────────────────────────────────────────────────
+      - name: Build (Linux → AppImage)
+        if: runner.os == 'Linux'
+        run: |
+          pyinstaller --onedir --noconsole --name GRN_VideoGenerator video_generator.py
+
+          # ── Assemble AppDir ──────────────────────────────────────────────
+          mkdir -p AppDir
+          cp -r dist/GRN_VideoGenerator/* AppDir/
+
+          # AppRun: entry-point script that locates itself at runtime
+          cat > AppDir/AppRun << 'EOF'
+          #!/bin/bash
+          HERE="$(dirname "$(readlink -f "$0")")"
+          exec "$HERE/GRN_VideoGenerator" "$@"
+          EOF
+          chmod +x AppDir/AppRun
+
+          # .desktop file (required by appimagetool)
+          cat > AppDir/GRN_VideoGenerator.desktop << 'EOF'
+          [Desktop Entry]
+          Name=GRN Video Generator
+          Exec=GRN_VideoGenerator
+          Icon=GRN_VideoGenerator
+          Type=Application
+          Categories=AudioVideo;Multimedia;
+          EOF
+
+          # Generate a minimal 64×64 PNG icon (solid steel-blue square)
+          python3 - << 'PYEOF'
+          import struct, zlib
+          def make_png(w, h, r=70, g=130, b=180):
+              row = b'\x00' + bytes([r, g, b]) * w
+              idat = zlib.compress(row * h)
+              def chunk(tag, data):
+                  payload = tag + data
+                  return (struct.pack('>I', len(data)) + payload +
+                          struct.pack('>I', zlib.crc32(payload) & 0xffffffff))
+              return (b'\x89PNG\r\n\x1a\n'
+                      + chunk(b'IHDR', struct.pack('>IIBBBBB', w, h, 8, 2, 0, 0, 0))
+                      + chunk(b'IDAT', idat)
+                      + chunk(b'IEND', b''))
+          with open('AppDir/GRN_VideoGenerator.png', 'wb') as f:
+              f.write(make_png(64, 64))
+          PYEOF
+
+          # ── Package with appimagetool ────────────────────────────────────
+          # --appimage-extract-and-run lets the tool run without FUSE on CI
+          wget -q "https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage" \
+               -O appimagetool
+          chmod +x appimagetool
+          ARCH=x86_64 ./appimagetool --appimage-extract-and-run \
+            AppDir "${{ matrix.artifact }}"
+
+      # ── Upload build artifact for the release job ─────────────────────────
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.label }}
+          path: ${{ matrix.artifact }}
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # Release job – collects all artifacts and publishes a GitHub Release.
+  # Only runs when a tag is pushed (not on workflow_dispatch without a tag).
+  # ──────────────────────────────────────────────────────────────────────────
+  release:
+    name: Create GitHub Release
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+
+    steps:
+      - name: Download all build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true   # flatten into artifacts/ instead of artifacts/<label>/
+
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: artifacts/*
+          generate_release_notes: true

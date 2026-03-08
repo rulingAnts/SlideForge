@@ -1,6 +1,6 @@
 # GRN Video Generator
 
-A Python tkinter application that creates YouTube-compatible MP4 videos from audio files and images.
+A Python tkinter application that creates YouTube-compatible MP4 videos from audio files and images, with the ability to export a single combined video.
 
 ## Features
 
@@ -10,6 +10,7 @@ A Python tkinter application that creates YouTube-compatible MP4 videos from aud
 - **Batch processing**: Process multiple files at once
 - **720p output**: Creates YouTube-compatible 720p MP4 videos
 - **Flexible association**: Associate images with audio files individually or in bulk
+- **Combined export**: Concatenate all generated videos into a single file, with a 1-second black transition and subtle audio click between each clip
 
 ## Requirements
 
@@ -62,11 +63,28 @@ python video_generator.py
    - Choose an output folder
    - The app will generate a 720p MP4 video for each audio-image pair
 
+5. **Export a combined video** (optional):
+   - After creating 2 or more videos, the "Export Combined Video" button becomes active
+   - Click it to merge all videos into a single file
+   - A 1-second black screen with a subtle audio click separates each clip
+
+## Pre-built Releases
+
+Download a pre-built binary for your platform from the [Releases](https://github.com/rulingAnts/GRN_video_generator/releases) page.
+No Python installation required — ffmpeg still needs to be installed on your system.
+
+| Platform | File |
+|---|---|
+| macOS (Apple Silicon) | `GRN_VideoGenerator-macos-arm64.dmg` |
+| macOS (Intel) | `GRN_VideoGenerator-macos-x64.dmg` |
+| Windows x64 | `GRN_VideoGenerator-windows-x64.exe` |
+| Linux x86-64 | `GRN_VideoGenerator-linux-x86_64.AppImage` |
+
 ## How It Works
 
 The application uses ffmpeg to combine static images with audio files to create videos:
 
-- Video resolution: 1280x720 (720p)
+- Video resolution: 1280×720 (720p)
 - Video codec: H.264 (libx264)
 - Audio codec: AAC
 - Audio bitrate: 192 kbps
@@ -76,8 +94,10 @@ The application uses ffmpeg to combine static images with audio files to create 
 
 ## License
 
-This project is open source and available under the MIT License.
+Copyright © 2025 Seth Johnston. Licensed under the [GNU Affero General Public License v3.0](LICENSE).
 
-## Contributing
+In short: you are free to use, modify, and distribute this software, but any distributed or network-hosted version must also be released under the same AGPL-3.0 terms with source code available.
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+## Acknowledgements
+
+Developed with AI assistance from [GitHub Copilot Chat](https://github.com/features/copilot) in Visual Studio Code.
