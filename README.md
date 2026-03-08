@@ -1,4 +1,4 @@
-# GRN Video Generator
+# SlideForge
 
 A Python tkinter application that creates YouTube-compatible MP4 videos from audio files and images, with the ability to export a single combined video.
 
@@ -37,8 +37,8 @@ Download and install from [ffmpeg.org](https://ffmpeg.org/download.html)
 
 1. Clone this repository:
 ```bash
-git clone https://github.com/rulingAnts/GRN_video_generator.git
-cd GRN_video_generator
+git clone https://github.com/rulingAnts/SlideForge.git
+cd SlideForge
 ```
 
 2. The application uses only Python standard library modules (tkinter, subprocess, threading), so no additional Python packages are required.
@@ -70,15 +70,14 @@ python video_generator.py
 
 ## Pre-built Releases
 
-Download a pre-built binary for your platform from the [Releases](https://github.com/rulingAnts/GRN_video_generator/releases) page.
+Download a pre-built binary for your platform from the [Releases](https://github.com/rulingAnts/SlideForge/releases) page.
 No Python installation required — ffmpeg still needs to be installed on your system.
 
 | Platform | File |
 |---|---|
-| macOS (Apple Silicon) | `GRN_VideoGenerator-macos-arm64.dmg` |
-| macOS (Intel) | `GRN_VideoGenerator-macos-x64.dmg` |
-| Windows x64 | `GRN_VideoGenerator-windows-x64.exe` |
-| Linux x86-64 | `GRN_VideoGenerator-linux-x86_64.AppImage` |
+| macOS (Apple Silicon) | `SlideForge-macos-arm64.dmg` |
+| Windows x64 | `SlideForge-windows-x64.exe` |
+| Linux x86-64 | `SlideForge-linux-x86_64.AppImage` |
 
 ## How It Works
 

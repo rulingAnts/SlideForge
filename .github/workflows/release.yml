@@ -24,17 +24,17 @@ jobs:
           # macOS (Apple Silicon) → onedir .app bundle
           - os: macos-latest
             label: macos-arm64
-            artifact: GRN_VideoGenerator-macos-arm64.dmg
+            artifact: SlideForge-macos-arm64.dmg
 
           # Windows x64 → single .exe
           - os: windows-latest
             label: windows-x64
-            artifact: GRN_VideoGenerator-windows-x64.exe
+            artifact: SlideForge-windows-x64.exe
 
           # Linux x86-64 → AppImage
           - os: ubuntu-latest
             label: linux-x86_64
-            artifact: GRN_VideoGenerator-linux-x86_64.AppImage
+            artifact: SlideForge-linux-x86_64.AppImage
 
     steps:
       - name: Checkout
@@ -64,16 +64,16 @@ jobs:
       - name: Build (macOS)
         if: runner.os == 'macOS'
         run: |
-          pyinstaller --onedir --windowed --name GRN_VideoGenerator video_generator.py
+          pyinstaller --onedir --windowed --name SlideForge video_generator.py
 
           # Stage folder for DMG contents
           mkdir -p dmg_stage
-          cp -r dist/GRN_VideoGenerator.app dmg_stage/
+          cp -r dist/SlideForge.app dmg_stage/
           ln -s /Applications dmg_stage/Applications
 
           # Create compressed, read-only DMG
           hdiutil create \
-            -volname "GRN VideoGenerator" \
+            -volname "SlideForge" \
             -srcfolder dmg_stage \
             -ov -format UDZO \
             "${{ matrix.artifact }}"
@@ -83,33 +83,33 @@ jobs:
         if: runner.os == 'Windows'
         shell: bash
         run: |
-          pyinstaller --onefile --windowed --name GRN_VideoGenerator video_generator.py
-          cp dist/GRN_VideoGenerator.exe "${{ matrix.artifact }}"
+          pyinstaller --onefile --windowed --name SlideForge video_generator.py
+          cp dist/SlideForge.exe "${{ matrix.artifact }}"
 
       # ── Linux → AppImage ──────────────────────────────────────────────────
       - name: Build (Linux → AppImage)
         if: runner.os == 'Linux'
         run: |
-          pyinstaller --onedir --noconsole --name GRN_VideoGenerator video_generator.py
+          pyinstaller --onedir --noconsole --name SlideForge video_generator.py
 
           # ── Assemble AppDir ──────────────────────────────────────────────
           mkdir -p AppDir
-          cp -r dist/GRN_VideoGenerator/* AppDir/
+          cp -r dist/SlideForge/* AppDir/
 
           # AppRun: entry-point script that locates itself at runtime
           cat > AppDir/AppRun << 'EOF'
           #!/bin/bash
           HERE="$(dirname "$(readlink -f "$0")")"
-          exec "$HERE/GRN_VideoGenerator" "$@"
+          exec "$HERE/SlideForge" "$@"
           EOF
           chmod +x AppDir/AppRun
 
           # .desktop file (required by appimagetool)
-          cat > AppDir/GRN_VideoGenerator.desktop << 'EOF'
+          cat > AppDir/SlideForge.desktop << 'EOF'
           [Desktop Entry]
-          Name=GRN Video Generator
-          Exec=GRN_VideoGenerator
-          Icon=GRN_VideoGenerator
+          Name=SlideForge
+          Exec=SlideForge
+          Icon=SlideForge
           Type=Application
           Categories=AudioVideo;
           EOF
@@ -128,7 +128,7 @@ jobs:
                       + chunk(b'IHDR', struct.pack('>IIBBBBB', w, h, 8, 2, 0, 0, 0))
                       + chunk(b'IDAT', idat)
                       + chunk(b'IEND', b''))
-          with open('AppDir/GRN_VideoGenerator.png', 'wb') as f:
+          with open('AppDir/SlideForge.png', 'wb') as f:
               f.write(make_png(64, 64))
           PYEOF
 

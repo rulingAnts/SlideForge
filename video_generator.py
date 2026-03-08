@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-GRN Video Generator - A tkinter application to create videos from audio files and images.
+SlideForge - A tkinter application to create videos from audio files and images.
 """
 
 import os
@@ -31,7 +31,7 @@ class VideoGeneratorApp:
     
     def __init__(self, root):
         self.root = root
-        self.root.title("GRN Video Generator")
+        self.root.title("SlideForge")
         self.root.geometry("900x600")
         
         self.audio_folder = None
