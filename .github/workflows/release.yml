@@ -56,6 +56,24 @@ jobs:
       - name: Install PyInstaller
         run: pip install pyinstaller
 
+      # ── Stage a self-contained ffmpeg binary for bundling ─────────────────
+      # imageio-ffmpeg ships static, pre-built ffmpeg binaries for every
+      # supported platform (macOS arm64, Windows x64, Linux x86-64).
+      # We install it here only to extract the binary; it is NOT a runtime
+      # dependency of SlideForge itself.
+      - name: Stage bundled ffmpeg
+        run: |
+          pip install imageio-ffmpeg
+          python - <<'PYEOF'
+          import imageio_ffmpeg, shutil, sys, os
+          src = imageio_ffmpeg.get_ffmpeg_exe()
+          dst = 'ffmpeg' + ('.exe' if sys.platform == 'win32' else '')
+          shutil.copy2(src, dst)
+          if sys.platform != 'win32':
+              os.chmod(dst, 0o755)
+          print(f'Staged ffmpeg: {src} -> {dst}')
+          PYEOF
+
       # ── macOS ─────────────────────────────────────────────────────────────
       # --windowed produces a proper .app bundle.
       # hdiutil creates a read/write staging DMG, adds the app + an
@@ -64,7 +82,9 @@ jobs:
       - name: Build (macOS)
         if: runner.os == 'macOS'
         run: |
-          pyinstaller --onedir --windowed --name SlideForge video_generator.py
+          pyinstaller --onedir --windowed --name SlideForge \
+            --add-binary "ffmpeg:." \
+            video_generator.py
 
           # Stage folder for DMG contents
           mkdir -p dmg_stage
@@ -83,14 +103,18 @@ jobs:
         if: runner.os == 'Windows'
         shell: bash
         run: |
-          pyinstaller --onefile --windowed --name SlideForge video_generator.py
+          pyinstaller --onefile --windowed --name SlideForge \
+            --add-binary "ffmpeg.exe;." \
+            video_generator.py
           cp dist/SlideForge.exe "${{ matrix.artifact }}"
 
       # ── Linux → AppImage ──────────────────────────────────────────────────
       - name: Build (Linux → AppImage)
         if: runner.os == 'Linux'
         run: |
-          pyinstaller --onedir --noconsole --name SlideForge video_generator.py
+          pyinstaller --onedir --noconsole --name SlideForge \
+            --add-binary "ffmpeg:." \
+            video_generator.py
 
           # ── Assemble AppDir ──────────────────────────────────────────────
           mkdir -p AppDir

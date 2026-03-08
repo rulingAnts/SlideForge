@@ -5,12 +5,37 @@ SlideForge - A tkinter application to create videos from audio files and images.
 
 import os
 import subprocess
+import sys
 import tempfile
 import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
 from pathlib import Path
 import threading
 import shutil
+
+
+def _resolve_ffmpeg() -> str:
+    """Return the path to the ffmpeg executable.
+
+    When the app is frozen by PyInstaller, prefer the copy bundled inside the
+    package so users do not need a separate ffmpeg installation.  Falls back to
+    whatever 'ffmpeg' resolves to on the system PATH when running from source.
+    """
+    if getattr(sys, 'frozen', False):
+        bin_name = 'ffmpeg.exe' if sys.platform == 'win32' else 'ffmpeg'
+        # Primary location: _MEIPASS (works for both --onefile and --onedir)
+        if hasattr(sys, '_MEIPASS'):
+            candidate = os.path.join(sys._MEIPASS, bin_name)
+            if os.path.isfile(candidate):
+                return candidate
+        # Fallback: next to the executable (older PyInstaller onedir layout)
+        candidate = os.path.join(os.path.dirname(sys.executable), bin_name)
+        if os.path.isfile(candidate):
+            return candidate
+    return 'ffmpeg'
+
+
+_FFMPEG = _resolve_ffmpeg()
 
 
 class AudioImagePair:
@@ -327,7 +352,7 @@ class VideoGeneratorApp:
         audio_format_flags = ['-f', 'wav'] if pair.audio_path.lower().endswith('.wav') else []
 
         cmd = [
-            'ffmpeg',
+            _FFMPEG,
             '-loop', '1',
             '-i', pair.image_path,
             *audio_format_flags,
@@ -382,7 +407,7 @@ class VideoGeneratorApp:
                 # aevalsrc produces a decaying sine burst (click) that fades within ~10ms
                 transition_path = os.path.join(tmpdir, "transition.mp4")
                 transition_cmd = [
-                    'ffmpeg',
+                    _FFMPEG,
                     '-f', 'lavfi',
                     '-i', 'color=black:size=1280x720:rate=25:duration=1',
                     '-f', 'lavfi',
@@ -405,7 +430,7 @@ class VideoGeneratorApp:
                 
                 # Concatenate using the concat demuxer (-c copy avoids re-encoding)
                 concat_cmd = [
-                    'ffmpeg',
+                    _FFMPEG,
                     '-f', 'concat',
                     '-safe', '0',
                     '-i', filelist_path,
@@ -426,11 +451,16 @@ class VideoGeneratorApp:
                 self.combine_btn.config(state=tk.NORMAL)
 
 
-def check_ffmpeg():
-    """Check if ffmpeg is available in the system."""
+def check_ffmpeg() -> bool:
+    """Return True if the resolved ffmpeg binary is executable."""
     try:
-        return shutil.which('ffmpeg') is not None
-    except Exception:
+        result = subprocess.run(
+            [_FFMPEG, '-version'],
+            capture_output=True,
+            timeout=5,
+        )
+        return result.returncode == 0
+    except (FileNotFoundError, OSError, subprocess.TimeoutExpired):
         return False
 
 
@@ -440,15 +470,22 @@ def main():
     if not check_ffmpeg():
         root = tk.Tk()
         root.withdraw()  # Hide the main window
-        messagebox.showerror(
-            "ffmpeg Not Found",
-            "ffmpeg is not installed or not found in your system PATH.\n\n"
-            "Please install ffmpeg:\n"
-            "- Ubuntu/Debian: sudo apt-get install ffmpeg\n"
-            "- macOS: brew install ffmpeg\n"
-            "- Windows: Download from https://ffmpeg.org/download.html\n\n"
-            "After installation, restart the application."
-        )
+        if getattr(sys, 'frozen', False):
+            msg = (
+                "ffmpeg was not found inside the application bundle.\n\n"
+                "This is an internal packaging error — please re-download "
+                "SlideForge from the official releases page."
+            )
+        else:
+            msg = (
+                "ffmpeg is not installed or not found in your system PATH.\n\n"
+                "Please install ffmpeg:\n"
+                "- Ubuntu/Debian: sudo apt-get install ffmpeg\n"
+                "- macOS: brew install ffmpeg\n"
+                "- Windows: Download from https://ffmpeg.org/download.html\n\n"
+                "After installation, restart the application."
+            )
+        messagebox.showerror("ffmpeg Not Found", msg)
         root.destroy()
         return
     

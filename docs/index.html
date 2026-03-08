@@ -505,8 +505,8 @@
       <span class="tag" id="version-tag">fetching…</span>
     </div>
     <p class="ffmpeg-note">
-      Pre-built binaries require <a href="https://ffmpeg.org/download.html" target="_blank" rel="noopener">ffmpeg</a> to be installed on your system.
-      No Python installation needed.
+      Pre-built binaries include a bundled copy of ffmpeg — no extra installs needed.
+      Running from source requires <a href="https://ffmpeg.org/download.html" target="_blank" rel="noopener">ffmpeg</a> on your PATH.
     </p>
   </div>
 </section>
@@ -589,33 +589,33 @@
 <section id="requirements">
   <div class="container">
     <h2 class="section-title">Requirements</h2>
-    <p class="section-subtitle">Pre-built binaries only need ffmpeg. Running from source requires Python too.</p>
+    <p class="section-subtitle">Pre-built binaries are fully self-contained. Only source installs need extra setup.</p>
     <div class="req-grid">
 
       <div class="req-card">
         <h3>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#e95420" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
-          ffmpeg <span class="req-chip">Required for all platforms</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#58c4a4" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+          Pre-built binaries <span class="req-chip">Zero dependencies</span>
         </h3>
-        <p style="color:var(--c-muted);font-size:.9rem;margin-bottom:.7rem;">SlideForge calls <code>ffmpeg</code> under the hood. It must be on your system PATH.</p>
-        <strong style="font-size:.82rem;color:var(--c-muted);text-transform:uppercase;letter-spacing:.04em;">macOS</strong>
-        <pre><code>brew install ffmpeg</code></pre>
-        <strong style="font-size:.82rem;color:var(--c-muted);text-transform:uppercase;letter-spacing:.04em;display:block;margin-top:.8rem">Ubuntu / Debian</strong>
-        <pre><code>sudo apt install ffmpeg</code></pre>
-        <strong style="font-size:.82rem;color:var(--c-muted);text-transform:uppercase;letter-spacing:.04em;display:block;margin-top:.8rem">Windows</strong>
-        <p style="color:var(--c-muted);font-size:.88rem;margin-top:.4rem">
-          Download the installer from <a href="https://ffmpeg.org/download.html" target="_blank" rel="noopener">ffmpeg.org</a> and add it to your PATH.
+        <p style="color:var(--c-muted);font-size:.9rem;">
+          ffmpeg is statically bundled inside the download — no installation, no PATH setup, no brew, nothing.
+          Just download and run.
         </p>
       </div>
 
       <div class="req-card">
         <h3>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4f8ef7" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
-          Python 3.6+ <span class="req-chip">Source only</span>
+          Running from source <span class="req-chip">Developers</span>
         </h3>
-        <p style="color:var(--c-muted);font-size:.9rem;margin-bottom:.7rem;">Only needed when running directly from source. Pre-built binaries include the Python runtime.</p>
-        <p style="color:var(--c-muted);font-size:.9rem;">
-          All Python dependencies are part of the standard library (<code>tkinter</code>, <code>subprocess</code>, <code>threading</code>, <code>pathlib</code>) — no <code>pip install</code> step needed.
+        <p style="color:var(--c-muted);font-size:.9rem;margin-bottom:.7rem;">Requires Python 3.6+ and a system ffmpeg. All Python deps are stdlib — no <code>pip install</code> needed.</p>
+        <strong style="font-size:.82rem;color:var(--c-muted);text-transform:uppercase;letter-spacing:.04em;">macOS</strong>
+        <pre><code>brew install ffmpeg</code></pre>
+        <strong style="font-size:.82rem;color:var(--c-muted);text-transform:uppercase;letter-spacing:.04em;display:block;margin-top:.8rem">Ubuntu / Debian</strong>
+        <pre><code>sudo apt install ffmpeg</code></pre>
+        <strong style="font-size:.82rem;color:var(--c-muted);text-transform:uppercase;letter-spacing:.04em;display:block;margin-top:.8rem">Windows</strong>
+        <p style="color:var(--c-muted);font-size:.88rem;margin-top:.4rem">
+          Download from <a href="https://ffmpeg.org/download.html" target="_blank" rel="noopener">ffmpeg.org</a> and add it to your PATH.
         </p>
       </div>
 
@@ -652,15 +652,8 @@
       <div class="step">
         <div class="step-num">2</div>
         <div class="step-body">
-          <h4>Install ffmpeg</h4>
-          <p>See the <a href="#requirements">Requirements</a> section above for platform-specific instructions.</p>
-        </div>
-      </div>
-
-      <div class="step">
-        <div class="step-num">3</div>
-        <div class="step-body">
           <h4>Run the application</h4>
+          <p>ffmpeg is included in the download — no extra setup needed.</p>
           <p><strong>macOS:</strong> Open the <code>.dmg</code>, drag SlideForge to Applications, then double-click to launch.</p>
           <p style="margin-top:.4rem"><strong>Windows:</strong> Double-click <code>SlideForge-windows-x64.exe</code>. You may need to click "More info → Run anyway" in Windows Defender SmartScreen the first time.</p>
           <p style="margin-top:.4rem"><strong>Linux:</strong> Make the AppImage executable, then run it:</p>
