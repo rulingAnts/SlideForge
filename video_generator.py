@@ -112,8 +112,8 @@ class VideoGeneratorApp:
         self.progress_label.pack(pady=5)
         
     def select_folder(self):
-        """Open dialog to select folder containing audio files."""
-        folder = filedialog.askdirectory(title="Select Folder with Audio Files")
+        """Open dialog to select folder containing audio files or MP4s."""
+        folder = filedialog.askdirectory(title="Select Folder")
         
         if not folder:
             return
@@ -125,7 +125,7 @@ class VideoGeneratorApp:
         self._scan_audio_files()
         
     def _scan_audio_files(self):
-        """Scan the selected folder for audio files."""
+        """Scan the selected folder for audio files, or MP4s if no audio is found."""
         self.audio_image_pairs = []
         self.created_videos = []
         self.combine_btn.config(state=tk.DISABLED)
@@ -146,6 +146,24 @@ class VideoGeneratorApp:
         
         # Sort files for consistent ordering
         audio_files.sort()
+        
+        if not audio_files:
+            # No audio files — check for MP4s to combine directly
+            mp4_files = sorted(
+                f for f in os.listdir(self.audio_folder)
+                if os.path.splitext(f)[1].lower() == '.mp4'
+            )
+            if mp4_files:
+                self.created_videos = [
+                    os.path.join(self.audio_folder, f) for f in mp4_files
+                ]
+                self.combine_btn.config(state=tk.NORMAL)
+                self.progress_label.config(
+                    text=f"Found {len(mp4_files)} MP4 file(s) ready to combine. Click \"Create Videos\" or \"Export Combined Video\"."
+                )
+            else:
+                self.progress_label.config(text="No audio or MP4 files found in this folder.")
+            return
         
         # Create audio-image pairs
         for audio_file in audio_files:
@@ -223,7 +241,12 @@ class VideoGeneratorApp:
                 break
                 
     def create_videos(self):
-        """Create videos from audio-image pairs."""
+        """Create videos from audio-image pairs, or combine MP4s if in MP4-only mode."""
+        # MP4-only mode: no audio pairs, but MP4s are already loaded
+        if not self.audio_image_pairs and self.created_videos:
+            self.combine_videos()
+            return
+
         # Validate that all pairs have images
         pairs_without_images = [pair for pair in self.audio_image_pairs if not pair.image_path]
         
@@ -300,10 +323,14 @@ class VideoGeneratorApp:
         # -shortest: finish when audio ends
         # -vf scale=1280:720: scale to 720p
         
+        # For WAV files, explicitly specify the format to handle non-standard headers
+        audio_format_flags = ['-f', 'wav'] if pair.audio_path.lower().endswith('.wav') else []
+
         cmd = [
             'ffmpeg',
             '-loop', '1',
             '-i', pair.image_path,
+            *audio_format_flags,
             '-i', pair.audio_path,
             '-c:v', 'libx264',
             '-tune', 'stillimage',
