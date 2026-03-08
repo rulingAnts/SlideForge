@@ -62,6 +62,7 @@ jobs:
       # We install it here only to extract the binary; it is NOT a runtime
       # dependency of SlideForge itself.
       - name: Stage bundled ffmpeg
+        shell: bash
         run: |
           pip install imageio-ffmpeg
           python - <<'PYEOF'
