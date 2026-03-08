@@ -53,7 +53,7 @@ class VideoGeneratorApp:
         self.folder_label.pack(side=tk.LEFT, padx=10)
         
         tk.Button(top_frame, text="Select Folder", command=self.select_folder, 
-                 bg="#4CAF50", fg="white", padx=20).pack(side=tk.RIGHT)
+                 bg="#4CAF50", padx=20).pack(side=tk.RIGHT)
         
         # Middle frame for the file list
         middle_frame = tk.Frame(self.root, padx=10, pady=10)
@@ -90,20 +90,20 @@ class VideoGeneratorApp:
         
         tk.Button(bottom_frame, text="Select Image for Selected File", 
                  command=self.select_image_for_selected, 
-                 bg="#2196F3", fg="white", padx=20).pack(side=tk.LEFT, padx=5)
+                 bg="#2196F3", padx=20).pack(side=tk.LEFT, padx=5)
         
         tk.Button(bottom_frame, text="Select Images for All", 
                  command=self.select_images_for_all, 
-                 bg="#FF9800", fg="white", padx=20).pack(side=tk.LEFT, padx=5)
+                 bg="#FF9800", padx=20).pack(side=tk.LEFT, padx=5)
         
         tk.Button(bottom_frame, text="Create Videos", 
                  command=self.create_videos, 
-                 bg="#f44336", fg="white", padx=30, 
+                 bg="#f44336", padx=30, 
                  font=("Arial", 10, "bold")).pack(side=tk.RIGHT, padx=5)
         
         self.combine_btn = tk.Button(bottom_frame, text="Export Combined Video",
                  command=self.combine_videos,
-                 bg="#9C27B0", fg="white", padx=20,
+                 bg="#9C27B0", padx=20,
                  state=tk.DISABLED)
         self.combine_btn.pack(side=tk.RIGHT, padx=5)
         
