@@ -21,15 +21,10 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # macOS Apple Silicon → onedir .app bundle
-          - os: macos-14
+          # macOS (Apple Silicon) → onedir .app bundle
+          - os: macos-latest
             label: macos-arm64
             artifact: GRN_VideoGenerator-macos-arm64.dmg
-
-          # macOS Intel → onedir .app bundle
-          - os: macos-13
-            label: macos-x64
-            artifact: GRN_VideoGenerator-macos-x64.dmg
 
           # Windows x64 → single .exe
           - os: windows-latest
@@ -116,7 +111,7 @@ jobs:
           Exec=GRN_VideoGenerator
           Icon=GRN_VideoGenerator
           Type=Application
-          Categories=AudioVideo;Multimedia;
+          Categories=AudioVideo;
           EOF
 
           # Generate a minimal 64×64 PNG icon (solid steel-blue square)
