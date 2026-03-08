@@ -5,6 +5,7 @@ GRN Video Generator - A tkinter application to create videos from audio files an
 
 import os
 import subprocess
+import tempfile
 import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
 from pathlib import Path
@@ -35,6 +36,7 @@ class VideoGeneratorApp:
         
         self.audio_folder = None
         self.audio_image_pairs = []
+        self.created_videos = []
         
         self._create_ui()
         
@@ -99,6 +101,12 @@ class VideoGeneratorApp:
                  bg="#f44336", fg="white", padx=30, 
                  font=("Arial", 10, "bold")).pack(side=tk.RIGHT, padx=5)
         
+        self.combine_btn = tk.Button(bottom_frame, text="Export Combined Video",
+                 command=self.combine_videos,
+                 bg="#9C27B0", fg="white", padx=20,
+                 state=tk.DISABLED)
+        self.combine_btn.pack(side=tk.RIGHT, padx=5)
+        
         # Progress label
         self.progress_label = tk.Label(self.root, text="", fg="blue")
         self.progress_label.pack(pady=5)
@@ -119,6 +127,8 @@ class VideoGeneratorApp:
     def _scan_audio_files(self):
         """Scan the selected folder for audio files."""
         self.audio_image_pairs = []
+        self.created_videos = []
+        self.combine_btn.config(state=tk.DISABLED)
         
         # Clear the tree
         for item in self.tree.get_children():
@@ -243,6 +253,7 @@ class VideoGeneratorApp:
     def _create_videos_thread(self, output_folder):
         """Thread function to create videos."""
         total = len(self.audio_image_pairs)
+        self.created_videos = []
         
         for i, pair in enumerate(self.audio_image_pairs):
             # Update status in tree
@@ -255,16 +266,21 @@ class VideoGeneratorApp:
             
             try:
                 # Create video
-                self._create_single_video(pair, output_folder)
+                output_path = self._create_single_video(pair, output_folder)
+                self.created_videos.append(output_path)
                 
                 # Update status
                 self.tree.item(item, values=(audio_file, image_file, "Done"))
             except Exception as e:
-                self.tree.item(item, values=(audio_file, image_file, f"Error"))
+                self.tree.item(item, values=(audio_file, image_file, "Error"))
                 messagebox.showerror("Error", f"Failed to create video for {audio_file}:\n{str(e)}")
         
-        self.progress_label.config(text=f"Completed! {total} video(s) created in {output_folder}")
-        messagebox.showinfo("Success", f"Successfully created {total} video(s)!")
+        success_count = len(self.created_videos)
+        self.progress_label.config(text=f"Completed! {success_count} video(s) created in {output_folder}")
+        messagebox.showinfo("Success", f"Successfully created {success_count} video(s)!")
+        
+        if success_count > 1:
+            self.combine_btn.config(state=tk.NORMAL)
         
     def _create_single_video(self, pair, output_folder):
         """Create a single video from audio-image pair using ffmpeg."""
@@ -305,6 +321,82 @@ class VideoGeneratorApp:
         
         if result.returncode != 0:
             raise Exception(f"ffmpeg error: {result.stderr}")
+        
+        return output_path
+
+
+    def combine_videos(self):
+        """Prompt for output path and start the combine thread."""
+        if not self.created_videos:
+            messagebox.showwarning("No Videos", "No videos available to combine. Please create videos first.")
+            return
+        
+        output_path = filedialog.asksaveasfilename(
+            title="Save Combined Video As",
+            defaultextension=".mp4",
+            filetypes=[("MP4 video", "*.mp4"), ("All files", "*.*")]
+        )
+        
+        if not output_path:
+            return
+        
+        thread = threading.Thread(target=self._combine_videos_thread, args=(output_path,))
+        thread.daemon = True
+        thread.start()
+    
+    def _combine_videos_thread(self, output_path):
+        """Thread function to combine all created videos with transition clips."""
+        self.combine_btn.config(state=tk.DISABLED)
+        self.progress_label.config(text="Generating combined video...")
+        
+        try:
+            with tempfile.TemporaryDirectory() as tmpdir:
+                # Build a 1-second transition: black frame + subtle click at the start
+                # aevalsrc produces a decaying sine burst (click) that fades within ~10ms
+                transition_path = os.path.join(tmpdir, "transition.mp4")
+                transition_cmd = [
+                    'ffmpeg',
+                    '-f', 'lavfi',
+                    '-i', 'color=black:size=1280x720:rate=25:duration=1',
+                    '-f', 'lavfi',
+                    '-i', 'aevalsrc=0.4*exp(-3000*t)*sin(1200*2*PI*t):d=1:s=44100',
+                    '-c:v', 'libx264', '-pix_fmt', 'yuv420p',
+                    '-c:a', 'aac', '-b:a', '192k',
+                    '-y', transition_path
+                ]
+                result = subprocess.run(transition_cmd, capture_output=True, text=True)
+                if result.returncode != 0:
+                    raise Exception(f"Failed to create transition clip:\n{result.stderr}")
+                
+                # Write the concat file list: video, transition, video, transition, ..., video
+                filelist_path = os.path.join(tmpdir, "filelist.txt")
+                with open(filelist_path, 'w') as f:
+                    for i, video in enumerate(self.created_videos):
+                        if i > 0:
+                            f.write(f"file '{transition_path}'\n")
+                        f.write(f"file '{video}'\n")
+                
+                # Concatenate using the concat demuxer (-c copy avoids re-encoding)
+                concat_cmd = [
+                    'ffmpeg',
+                    '-f', 'concat',
+                    '-safe', '0',
+                    '-i', filelist_path,
+                    '-c', 'copy',
+                    '-y', output_path
+                ]
+                result = subprocess.run(concat_cmd, capture_output=True, text=True)
+                if result.returncode != 0:
+                    raise Exception(f"Failed to combine videos:\n{result.stderr}")
+            
+            self.progress_label.config(text=f"Combined video saved: {os.path.basename(output_path)}")
+            messagebox.showinfo("Success", f"Combined video saved successfully!\n{output_path}")
+        except Exception as e:
+            messagebox.showerror("Error", str(e))
+            self.progress_label.config(text="Combine failed.")
+        finally:
+            if len(self.created_videos) > 1:
+                self.combine_btn.config(state=tk.NORMAL)
 
 
 def check_ffmpeg():
