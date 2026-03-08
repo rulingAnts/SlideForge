@@ -14,10 +14,13 @@ A Python tkinter application that creates YouTube-compatible MP4 videos from aud
 
 ## Requirements
 
+When **running from source**, you need:
 - Python 3.6 or higher
-- ffmpeg (must be installed on your system)
+- ffmpeg on your system PATH
 
-### Installing ffmpeg
+**Pre-built binaries** include a bundled copy of ffmpeg — no extra installation required.
+
+### Installing ffmpeg (source builds only)
 
 #### Ubuntu/Debian
 ```bash
@@ -71,7 +74,7 @@ python video_generator.py
 ## Pre-built Releases
 
 Download a pre-built binary for your platform from the [Releases](https://github.com/rulingAnts/SlideForge/releases) page.
-No Python installation required — ffmpeg still needs to be installed on your system.
+No Python installation required. **ffmpeg is bundled inside the download** — no separate ffmpeg installation needed.
 
 | Platform | File |
 |---|---|
@@ -100,3 +103,64 @@ In short: you are free to use, modify, and distribute this software, but any dis
 ## Acknowledgements
 
 Developed with AI assistance from [GitHub Copilot Chat](https://github.com/features/copilot) in Visual Studio Code.
+
+## Third-Party Notices
+
+### FFmpeg
+
+Pre-built binaries of SlideForge include a copy of **FFmpeg 7.1**, obtained
+via [imageio-ffmpeg](https://github.com/imageio/imageio-ffmpeg) at build time.
+The bundled FFmpeg binary is compiled with GPL-licensed components
+(`--enable-gpl --enable-libx264 --enable-libx265 --enable-libvidstab`) and is
+therefore distributed under the **GNU General Public License, version 2 or
+later (GPL-2.0-or-later)**.
+
+> **Copyright © 2000–2024 the FFmpeg developers**
+>
+> This program is free software; you can redistribute it and/or modify it
+> under the terms of the GNU General Public License as published by the Free
+> Software Foundation; either version 2 of the License, or (at your option)
+> any later version.
+
+- **License text:** <https://www.gnu.org/licenses/old-licenses/gpl-2.0.html>
+- **Source code:** <https://ffmpeg.org/download.html>
+- **Project home:** <https://ffmpeg.org/>
+
+The FFmpeg binary is compiled against the following notable third-party
+libraries (among others):
+
+| Library | License | Copyright |
+|---|---|---|
+| libx264 | GPL 2+ | Copyright © 2003–2024 the x264 project |
+| libx265 | GPL 2+ | Copyright © 2013–2024 MulticoreWare, Inc. |
+| libvpx | BSD 3-Clause | Copyright © 2010–2024 the WebM project authors |
+| libopus | BSD 3-Clause | Copyright © 2001–2023 Xiph.Org Foundation |
+| libvorbis | BSD 3-Clause | Copyright © 2002–2020 Xiph.Org Foundation |
+| libtheora | BSD 3-Clause | Copyright © 2002–2020 Xiph.Org Foundation |
+| libmp3lame | LGPL 2+ | Copyright © The LAME Project |
+| libsvtav1 | BSD + AOMedia | Copyright © 2019 Alliance for Open Media |
+| libaom | BSD 2-Clause | Copyright © 2016 The WebM project |
+| libvmaf | BSD 2-Clause | Copyright © 2016–2024 Netflix, Inc. |
+| libwebp | BSD 3-Clause | Copyright © 2010 Google LLC |
+| libass | ISC | Copyright © 2006–2022 Grigori Goronzy |
+| libfreetype | FTL or GPL 2+ | Copyright © 1996–2024 David Turner et al. |
+| libharfbuzz | MIT | Copyright © 2010–2024 Behdad Esfahbod et al. |
+
+A full list of included libraries can be obtained by running the bundled
+binary with `ffmpeg -buildconf`.
+
+> **Note on license interaction:** SlideForge itself is AGPL-3.0-or-later.
+> FFmpeg is invoked as a separate subprocess and constitutes a separate,
+> independent program distributed in aggregate. The GPL-2.0-or-later terms
+> apply to the FFmpeg binary; the AGPL-3.0-or-later terms apply to
+> SlideForge. Users who redistribute either component must comply with the
+> respective license.
+
+### imageio-ffmpeg (build-time only)
+
+The [imageio-ffmpeg](https://github.com/imageio/imageio-ffmpeg) Python package
+is used **at build time only** (inside GitHub Actions) to obtain the pre-built
+FFmpeg binary. It is not distributed with SlideForge.
+
+- **License:** BSD 2-Clause
+- **Copyright:** Copyright © 2014–2024 the imageio contributors
